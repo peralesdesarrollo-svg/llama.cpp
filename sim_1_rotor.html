@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 1: Rotor de Neodimio N52</title>
+    <style>
+        body { background-color: #0b0f19; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .panel { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; max-width: 450px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.5); text-align: center; }
+        h2 { color: #38bdf8; font-size: 18px; text-transform: uppercase; margin-top: 0; }
+        .canvas-container { background: #020617; border-radius: 8px; border: 1px solid #334155; padding: 10px; margin: 15px 0; }
+        canvas { width: 100%; height: 260px; background: #020617; }
+        .data { background: #1e293b; padding: 10px; border-radius: 8px; font-weight: bold; border-left: 4px solid #38bdf8; font-size: 14px; }
+        .controls { display: flex; gap: 10px; margin-top: 15px; }
+        button { background: #0284c7; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; }
+        button:hover { background: #0369a1; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h2>Núcleo Inductivo: Matriz N52</h2>
+        <div class="canvas-container">
+            <canvas id="canvasRotor"></canvas>
+        </div>
+        <div id="telemetria" class="data">Flujo Entrehierro: 0.91 T | 6.9 Hz</div>
+        <div class="controls">
+            <button onclick="setVelocidad(1.5)">Tránsito Lento</button>
+            <button onclick="setVelocidad(8)">Resonancia Máxima</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvasRotor');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 300; canvas.height = 260;
+        let angulo = 0; let velocidad = 1.5;
+
+        function setVelocidad(v) {
+            velocidad = v;
+            document.getElementById('telemetria').innerText = v > 5 ? "Flujo Entrehierro: 0.91 T | 39.2 Hz" : "Flujo Entrehierro: 0.91 T | 6.9 Hz";
+        }
+
+        function dibujar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let cx = canvas.width / 2; let cy = canvas.height / 2;
+            angulo += velocidad * 0.02;
+
+            // Dibujar Estator (Bobinas fijas exteriores)
+            for (let i = 0; i < 12; i++) {
+                let a = (i * Math.PI / 6);
+                ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#475569';
+                ctx.beginPath(); ctx.arc(cx + Math.cos(a)*95, cy + Math.sin(a)*95, 12, 0, 2*Math.PI);
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#38bdf8'; ctx.font = '9px sans-serif';
+                ctx.fillText("Litz", cx + Math.cos(a)*95 - 8, cy + Math.sin(a)*95 + 3);
+            }
+
+            // Dibujar Rotor (Matriz radial de imanes N52)
+            ctx.save(); ctx.translate(cx, cy); ctx.rotate(angulo);
+            for (let i = 0; i < 8; i++) {
+                let a = (i * Math.PI / 4);
+                ctx.fillStyle = i % 2 === 0 ? '#ef4444' : '#3b82f6';
+                ctx.beginPath(); ctx.arc(Math.cos(a)*65, Math.sin(a)*65, 10, 0, 2*Math.PI); ctx.fill();
+                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px sans-serif';
+                ctx.fillText(i % 2 === 0 ? "N" : "S", Math.cos(a)*65 - 4, Math.sin(a)*65 + 4);
+            }
+            ctx.restore();
+            requestAnimationFrame(dibujar);
+        }
+        dibujar();
+    </script>
+</body>
+</html>

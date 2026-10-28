@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Workbench - Resonancia Planetaria V3.0</title>
+    <style>
+        body { background-color: #0b0f19; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        h1 { color: #38bdf8; font-size: 20px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .subtitle { color: #94a3b8; font-size: 12px; margin-bottom: 20px; text-align: center; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 1200px; width: 100%; }
+        .panel { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 15px; flex: 1; min-width: 320px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); display: flex; flex-direction: column; justify-content: space-between; }
+        .visual-box { display: flex; justify-content: center; align-items: flex-end; height: 350px; background: #020617; border-radius: 8px; position: relative; overflow: hidden; border: 1px solid #334155; }
+        .tunnel-wall { position: absolute; width: 100%; height: 10px; background: #334155; }
+        .tunnel-top { top: 0; }
+        .tunnel-bottom { bottom: 0; width: 100%; height: 25px; background: #1e293b; border-top: 2px solid #475569; }
+        
+        .poste-base { position: absolute; bottom: 25px; display: flex; flex-direction: column; align-items: center; height: 280px; width: 120px; }
+        .mastil-fibra { width: 10px; height: 280px; background: linear-gradient(90deg, #1e293b, #55585d, #1e293b); border-radius: 4px; position: absolute; bottom: 0; z-index: 1; }
+        .aleta-gota { width: 44px; height: 110px; background: linear-gradient(135deg, #0284c7, #38bdf8); border-radius: 50% 50% 50% 50% / 25% 25% 75% 75%; position: absolute; top: 30px; z-index: 2; transform-origin: center top; transition: transform 0.04s linear; box-shadow: 0 0 15px rgba(56,189,248,0.4); }
+        .piezo-actuador { width: 24px; height: 16px; background: #0284c7; border: 1px solid #38bdf8; position: absolute; bottom: 15px; z-index: 3; border-radius: 3px; box-shadow: 0 0 10px #0284c7; transition: all 0.2s; }
+        
+        .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .metric-card { background: #1e293b; padding: 10px; border-radius: 8px; border-left: 4px solid #38bdf8; }
+        .metric-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; }
+        .metric-value { font-size: 18px; font-weight: bold; color: #f8fafc; margin-top: 2px; }
+        .controls { margin-top: 15px; display: flex; gap: 10px; }
+        button { background: #0284c7; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; }
+        button:hover { background: #0369a1; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; margin-bottom: 10px; text-align: center; }
+        .bg-green { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid #10b981; }
+        .bg-blue { background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid #0284c7; }
+        
+        /* Esquema Visual del Rectificador SiC */
+        .rectificador-box { height: 140px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; margin-top: 10px; }
+        .diode-bridge { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 80%; }
+        .diode { background: #1e293b; border: 1px solid #475569; padding: 8px; border-radius: 4px; text-align: center; font-size: 10px; font-weight: bold; color: #94a3b8; transition: all 0.1s; }
+        .diode.active { background: rgba(16,185,129,0.3); border-color: #10b981; color: #34d399; box-shadow: 0 0 8px #10b981; }
+        canvas { width: 100%; height: 90px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Engineering Workbench - Simulación Resonante Real</h1>
+    <div class="subtitle">Mástil Adaptativo 5m Escala 1:1 en Túnel de 2m | Frecuencia Base Terrestre: 7.83 Hz</div>
+    <div class="container">
+        <div class="panel">
+            <div>
+                <div id="status-mecanico" class="status-badge bg-blue">Sintonizando Mástil (Ajuste Piezo: -5.99 N)</div>
+                <div class="visual-box">
+                    <div class="tunnel-wall tunnel-top"></div>
+                    <div class="poste-base">
+                        <div id="componente-aleta" class="aleta-gota"></div>
+                        <div class="mastil-fibra"></div>
+                        <div id="componente-piezo" class="piezo-actuador"></div>
+                    </div>
+                    <div class="tunnel-wall tunnel-bottom"></div>
+                </div>
+            </div>
+            <div class="controls">
+                <button onclick="cambiarEscenario(1)">Baja Frecuencia (Tránsito Lento)</button>
+                <button onclick="cambiarEscenario(5)">5to Armónico (Resonancia Total)</button>
+            </div>
+        </div>
+        <div class="panel">
+            <div>
+                <div id="status-electrico" class="status-badge bg-blue">Filtro Tanque LC: η 24%</div>
+                <div class="metrics">
+                    <div class="metric-card"><div class="metric-label">Frecuencia LC</div><div id="val-freq" class="metric-value">6.9 Hz</div></div>
+                    <div class="metric-card"><div class="metric-label">Potencia Cosechada</div><div id="val-pot" class="metric-value">0.3 W</div></div>
+                    <div class="metric-card"><div class="metric-label">FEM Faraday</div><div id="val-fem" class="metric-value">52.7 V</div></div>
+                    <div class="metric-card"><div class="metric-label">Amperaje DC</div><div id="val-amp" class="metric-value">0.02 A</div></div>
+                    <div class="metric-card"><div class="metric-label">Batería LFP (Tesla)</div><div id="val-soc" class="metric-value">87.6% SoC</div></div>
+                    <div class="metric-card"><div class="metric-label">Carga 24h Proyectada</div><div id="val-ah" class="metric-value">0.31 Ah</div></div>
+                </div>
+            </div>
+            <!-- Nuevo Módulo del Rectificador de Carburo de Silicio -->
+            <div class="rectificador-box">
+                <div style="font-size: 10px; color: #64748b; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">Puente de Diodos SiC Schottky (Etapa AC -> DC)</div>
+                <div class="diode-bridge">
+                    <div id="d1" class="diode">D1</div>
+                    <div id="d2" class="diode">D2</div>
+                    <div id="d3" class="diode">D3</div>
+                    <div id="d4" class="diode">D4</div>
+                </div>
+            </div>
+            <canvas id="grafico-onda"></canvas>
+        </div>
+    </div>
+    <script>
+        let frecuenciaActual = 6.9;
+        let amplitudOscilacion = 3; 
+        let tiempo = 0;
+        const aleta = document.getElementById('componente-aleta');
+        const piezo = document.getElementById('componente-piezo');
+        const canvas = document.getElementById('grafico-onda');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 300; canvas.height = 90;
+
+        function cambiarEscenario(fase) {
+            if(fase === 1) {
+                frecuenciaActual = 6.9; amplitudOscilacion = 3;
+                document.getElementById('val-freq').innerText = "6.9 Hz";
+                document.getElementById('val-pot').innerText = "0.3 W";
+                document.getElementById('val-fem').innerText = "52.7 V";
+                document.getElementById('val-amp').innerText = "0.02 A";
+                document.getElementById('val-soc').innerText = "87.6% SoC";
+                document.getElementById('val-ah').innerText = "0.31 Ah";
+                document.getElementById('status-mecanico').innerText = "Sintonizando Mástil (Ajuste Piezo: -5.99 N)";
+                document.getElementById('status-electrico').innerText = "Filtro Tanque LC: η 24%";
+                piezo.style.backgroundColor = "#0284c7";
+                piezo.style.boxShadow = "0 0 10px #0284c7";
+                document.getElementById('status-mecanico').className = "status-badge bg-blue";
+                document.getElementById('status-electrico').className = "status-badge bg-blue";
+            } else {
+                frecuenciaActual = 39.2; amplitudOscilacion = 18;
+                document.getElementById('val-freq').innerText = "39.2 Hz";
+                document.getElementById('val-pot').innerText = "98.6 W";
+                document.getElementById('val-fem').innerText = "442.0 V";
+                document.getElementById('val-amp').innerText = "4.90 A";
+                document.getElementById('val-soc').innerText = "88.2% SoC";
+                document.getElementById('val-ah').innerText = "76.44 Ah";
+                document.getElementById('status-mecanico').innerText = "RESONANCIA TOTAL: 5to Armónico Terrestre";
+                document.getElementById('status-electrico').innerText = "Acoplamiento LC Óptimo: η 97%";
+                piezo.style.backgroundColor = "#ef4444";
+                piezo.style.boxShadow = "0 0 20px #ef4444";
+                document.getElementById('status-mecanico').className = "status-badge bg-green";
+                document.getElementById('status-electrico').className = "status-badge bg-green";
+            }
+        }
+
+        function animar() {
+            tiempo += 0.05;
+            let desplazamiento = Math.sin(tiempo * (frecuenciaActual * 0.15)) * amplitudOscilacion;
+            aleta.style.transform = `translateX(${desplazamiento}px) rotate(${desplazamiento * 0.4}deg)`;
+            
+            // Simular la conmutación de los diodos según los ciclos positivo y negativo de la onda AC
+            let cicloPositivo = Math.sin(tiempo * (frecuenciaActual * 0.15)) > 0;
+            if(cicloPositivo) {
+                document.getElementById('d1').className = "diode active";
+                document.getElementById('d4').className = "diode active";
+                document.getElementById('d2').className = "diode";
+                document.getElementById('d3').className = "diode";
+            } else {
+                document.getElementById('d2').className = "diode active";
+                document.getElementById('d3').className = "diode active";
+                document.getElementById('d1').className = "diode";
+                document.getElementById('d4').className = "diode";
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.strokeStyle = frecuenciaActual > 20 ? '#10b981' : '#38bdf8';
+            ctx.lineWidth = 2;
+            for (let x = 0; x < canvas.width; x++) {
+                // Representación gráfica de la onda rectificada (Onda completa DC)
+                let baseOnda = Math.sin((x + tiempo * 60) * (frecuenciaActual * 0.005));
+                let y = canvas.height / 2 + Math.abs(baseOnda) * -(amplitudOscilacion * 1.5) + 15;
+                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            requestAnimationFrame(animar);
+        }
+        animar();
+    </script>
+</body>
+</html>

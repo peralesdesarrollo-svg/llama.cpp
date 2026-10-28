@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 2: Almacenamiento LFP</title>
+    <style>
+        body { background-color: #0b0f19; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .panel { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; max-width: 450px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        h2 { color: #10b981; font-size: 18px; text-transform: uppercase; text-align: center; margin-top: 0; }
+        .bms-box { background: #020617; border-radius: 8px; border: 1px solid #1e293b; padding: 15px; margin: 15px 0; }
+        .bar-container { background: #1e293b; height: 25px; border-radius: 6px; overflow: hidden; margin-top: 8px; border: 1px solid #334155; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #059669, #10b981); width: 87.6%; transition: width 0.5s ease; }
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
+        .value { font-weight: bold; color: #34d399; }
+        button { background: #10b981; color: #0b0f19; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:hover { background: #059669; color: white; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h2>Gestión de Carga BMS LFP</h2>
+        <div class="bms-box">
+            <div class="metric-row"><span>Buffer Supercondensadores:</span><span class="value" style="color:#38bdf8;">24.2 V / 30.0V Max</span></div>
+            <div class="metric-row"><span>Eficiencia del Sistema η:</span><span id="txt-efi" class="value">24%</span></div>
+            <div class="metric-row"><span>Corriente Neta de Inyección:</span><span id="txt-amp" class="value">0.02 A DC</span></div>
+            <div>
+                <span style="font-size: 12px; color: #94a3b8;">Estado de la Batería LFP (Tesla):</span>
+                <div class="bar-container">
+                    <div id="bms-bar" class="bar-fill" style="width: 87.6%;"></div>
+                </div>
+                <div id="txt-soc" style="text-align: right; font-size: 12px; font-weight: bold; margin-top: 4px;">87.6% SoC</div>
+            </div>
+        </div>
+        <button onclick="simularInyeccion()">Simular Pulso de Absorción Rápida</button>
+    </div>
+    <script>
+        function simularInyeccion() {
+            document.getElementById('txt-efi').innerText = "97%";
+            document.getElementById('txt-amp').innerText = "4.90 A DC";
+            document.getElementById('bms-bar').style.width = "88.2%";
+            document.getElementById('txt-soc').innerText = "88.2% SoC (Carga Activa)";
+            setTimeout(() => {
+                document.getElementById('txt-efi').innerText = "24%";
+                document.getElementById('txt-amp').innerText = "0.02 A DC";
+                document.getElementById('bms-bar').style.width = "87.6%";
+                document.getElementById('txt-soc').innerText = "87.6% SoC (Estable)";
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

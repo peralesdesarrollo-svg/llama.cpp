@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 3: Sistema Unificado Completo</title>
+    <style>
+        body { background-color: #0b0f19; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; padding: 15px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        h1 { color: #38bdf8; font-size: 18px; margin: 5px 0; text-transform: uppercase; text-align: center; }
+        .container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 1100px; width: 100%; }
+        .panel { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 15px; flex: 1; min-width: 310px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); display: flex; flex-direction: column; justify-content: space-between; }
+        .visual-box { display: flex; justify-content: center; align-items: flex-end; height: 320px; background: #020617; border-radius: 8px; position: relative; overflow: hidden; border: 1px solid #334155; }
+        .tunnel-wall { position: absolute; width: 100%; height: 8px; background: #334155; }
+        .tunnel-top { top: 0; } .tunnel-bottom { bottom: 0; height: 20px; background: #1e293b; border-top: 2px solid #475569; }
+        .poste-base { position: absolute; bottom: 20px; display: flex; flex-direction: column; align-items: center; height: 260px; width: 100px; }
+        .mastil-fibra { width: 8px; height: 260px; background: linear-gradient(90deg, #1e293b, #55585d, #1e293b); border-radius: 4px; position: absolute; bottom: 0; }
+        .aleta-gota { width: 40px; height: 100px; background: linear-gradient(135deg, #0284c7, #38bdf8); border-radius: 50% 50% 50% 50% / 25% 25% 75% 75%; position: absolute; top: 30px; transform-origin: center top; transition: transform 0.04s linear; box-shadow: 0 0 12px rgba(56,189,248,0.4); }
+        .piezo-actuador { width: 22px; height: 14px; background: #0284c7; position: absolute; bottom: 12px; border-radius: 3px; box-shadow: 0 0 8px #0284c7; transition: all 0.2s; }
+        .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .metric-card { background: #1e293b; padding: 8px; border-radius: 8px; border-left: 4px solid #38bdf8; }
+        .metric-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+        .metric-value { font-size: 16px; font-weight: bold; color: #f8fafc; }
+        .controls { margin-top: 12px; display: flex; gap: 8px; }
+        button { background: #0284c7; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; }
+        .rectificador-box { height: 100px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-top: 8px; }
+        .diode-bridge { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 90%; }
+        .diode { background: #1e293b; border: 1px solid #475569; padding: 5px; border-radius: 4px; text-align: center; font-size: 9px; font-weight: bold; color: #94a3b8; }
+        .diode.active { background: rgba(16,185,129,0.3); border-color: #10b981; color: #34d399; box-shadow: 0 0 6px #10b981; }
+        canvas { width: 100%; height: 80px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Módulo 3: Arquitectura Resonante Homogénea</h1>
+    <div class="container">
+        <div class="panel">
+            <div class="visual-box">
+                <div class="tunnel-wall tunnel-top"></div>
+                <div class="poste-base">
+                    <div id="comp-aleta" class="aleta-gota"></div>
+                    <div class="mastil-fibra"></div>
+                    <div id="comp-piezo" class="piezo-actuador"></div>
+                </div>
+                <div class="tunnel-wall tunnel-bottom"></div>
+            </div>
+            <div class="controls">
+                <button onclick="cambiarModo(1)">Baja Frecuencia</button>
+                <button onclick="cambiarModo(5)">Sintonía Planetaria (39.2 Hz)</button>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="metrics">
+                <div class="metric-card"><div class="metric-label">Frecuencia LC</div><div id="v-freq" class="metric-value">6.9 Hz</div></div>
+                <div class="metric-card"><div class="metric-label">Potencia</div><div id="v-pot" class="metric-value">0.3 W</div></div>
+                <div class="metric-card"><div class="metric-label">FEM Faraday</div><div id="v-fem" class="metric-value">52.7 V</div></div>
+                <div class="metric-card"><div class="metric-label">Batería LFP</div><div id="v-soc" class="metric-value">87.6%</div></div>
+            </div>
+            <div class="rectificador-box">
+                <div class="diode-bridge">
+                    <div id="nd1" class="diode">D1</div><div id="nd2" class="diode">D2</div>
+                    <div id="nd3" class="diode">D3</div><div id="nd4" class="diode">D4</div>
+                </div>
+            </div>
+            <canvas id="ondaUnificada"></canvas>
+        </div>
+    </div>
+    <script>
+        let freq = 6.9; let amp = 3; let t = 0;
+        const aleta = document.getElementById('comp-aleta');
+        const piezo = document.getElementById('comp-piezo');
+        const canvas = document.getElementById('ondaUnificada');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 300; canvas.height = 80;
+
+        function cambiarModo(m) {
+            if(m===1) {
+                freq = 6.9; amp = 3;
+                document.getElementById('v-freq').innerText = "6.9 Hz"; document.getElementById('v-pot').innerText = "0.3 W";
+                document.getElementById('v-fem').innerText = "52.7 V"; document.getElementById('v-soc').innerText = "87.6%";
+                piezo.style.backgroundColor = "#0284c7"; piezo.style.boxShadow = "0 0 8px #0284c7";
+            } else {
+                freq = 39.2; amp = 16;
+                document.getElementById('v-freq').innerText = "39.2 Hz"; document.getElementById('v-pot').innerText = "98.6 W";
+                document.getElementById('v-fem').innerText = "442.0 V"; document.getElementById('v-soc').innerText = "88.2%";
+                piezo.style.backgroundColor = "#ef4444"; piezo.style.boxShadow = "0 0 16px #ef4444";
+            }
+        }
+
+        function loop() {
+            t += 0.05;
+            let des = Math.sin(t * (freq * 0.15)) * amp;
+            aleta.style.transform = `translateX(${des}px) rotate(${des * 0.4}deg)`;
+            
+            let pos = Math.sin(t * (freq * 0.15)) > 0;
+            document.getElementById('nd1').className = pos ? "diode active" : "diode";
+            document.getElementById('nd4').className = pos ? "diode active" : "diode";
+            document.getElementById('nd2').className = !pos ? "diode active" : "diode";
+            document.getElementById('nd3').className = !pos ? "diode active" : "diode";
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath(); ctx.strokeStyle = freq > 20 ? '#10b981' : '#38bdf8'; ctx.lineWidth = 2;
+            for (let x = 0; x < canvas.width; x++) {
+                let y = canvas.height / 2 + Math.abs(Math.sin((x + t * 50) * (freq * 0.005))) * -(amp * 1.2) + 12;
+                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>
